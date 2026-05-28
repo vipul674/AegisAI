@@ -10,8 +10,10 @@ TODO for contributors (medium difficulty):
 """
 
 import hashlib
+import logging
 from collections import Counter
 from datetime import datetime, timedelta, timezone
+from typing import TypedDict
 
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
