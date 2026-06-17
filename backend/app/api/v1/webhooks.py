@@ -18,6 +18,7 @@ import hmac
 import json
 import logging
 from typing import Any, List
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -27,7 +28,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.webhook import WebhookConfig  # Assuming this is the SQLAlchemy model
-from app.schemas.webhook import WebhookCreate, WebhookResponse
+from app.schemas.webhook import WebhookCreate, WebhookResponse, _is_private_ip
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -50,6 +51,12 @@ async def _post_webhook(
 ) -> None:
     """Post webhook payload to a configured endpoint."""
     try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname or ""
+        if _is_private_ip(hostname):
+            logger.warning("Webhook delivery blocked: URL resolves to private IP: %s", url)
+            return
+
         payload_body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
         headers = {
